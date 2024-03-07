@@ -1,0 +1,163 @@
+________________________________________________________________________________________________________________________________
+|  !!!!All of these contents come via Linux Privilege Escalation for Beginners from TCM Security and this is just a note.!!!   |
+|                                                                                                                              |  
+|     Privilege escalationဆိုတာ systemတခုရဲ့ user levelတွေခုန်ကူးတာဖြစ်ပါတယ်။                                                            |
+|     ကျွန်တော်တို့ systemတခုကို စပြီး exploitနိုင်ပြီဆိုရင် ပထမဆုံးစရမှာက low level userအနေနဲ့ဖြစ်ပါတယ်။                                              |
+|     ဒါကြောင့် privilege escalationက systemတခုလုံးကို ownဖို့အရေးကြီးတာဖြစ်ပါတယ်။                                                           |
+|                                                                                                                              |
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Resources:
+
+  Cheat Sheat:
+    https://blog.g0tmi1k.com/2011/08/basic-linux-privilege-escalation/
+
+  Payload All the Things:
+    https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Linux%20-%20Privilege%20Escalation.md
+
+  Linpeas:
+    https://book.hacktricks.xyz/linux-unix/linux-privilege-escalation-checklist/
+
+  Sushant:
+    https://sushant747.gitbooks.io/total-oscp-guide/privilege_escalation_-_linux.html
+
+Target Lab:
+
+  Try Hack Me:
+    https://tryhackme.com/room/linuxprivescarena
+
+-------------------------------------------------------------------------------------------------------------------------------------------
+
+--------
+| NOTE |
+--------
+
+==================================================================================================================================================================================
+
+  Initial Enumeration:
+
+    ~~#  PE processတခုလုံးအတွက် အရေးအကြီးဆုံးက enumerationဖြစ်ပါတယ်။  #~~
+    !!!!  ဒီstepတွေက အားလုံးတော့ အလုပ်လုပ်မှာ မဟုတ်ပေမယ့် သေချာပေါက် အကုန်လိုက်စမ်းကြည့်ရမှာဖြစ်ပါတယ်  !!!!
+
+    MANUAL:
+        System enumeration:
+    
+          system enumerationဆိုတာ ကို့targetကို အတွင်းကနေ infoစုဆောင်းတာဖြစ်ပြီးတော့ PE processအတွက် ကိုက်ညီမယ့် exploitတွေ ရှာတဲ့နေရာမှာ
+          သုံးဖို့အရေးကြီးတဲ့ processဖြစ်ပါတယ်။
+    
+          $ uname -a : kernel versionနဲ့ system versionကိုပြပေးပါတယ်။ ဒီversionတွေနဲ့ kernel exploitအတွက် exploitတွေရှာနိုင်မှာဖြစ်ပါတယ်။
+    
+          $ lscpu  : Archithectureနဲ့ တခြားသော cpu infoတွေပြပေးပါတယ်။
+    
+          $ ps aux  : ဒီcommandနဲ့ ဘယ်လိုserviceတွေ runနေလဲဆိုတာ အပြည့်အစုံတွေ့နိုင်မှာဖြစ်ပါတယ်။ ဘယ်userက ဘယ်ဟာကိုrunနေလဲဆိုတာတွေဟာလည်း အရေးကြီးပါတယ်။
+    
+          $ hostname  : hostnameက တခါတလေ CTFတွေမှာ exploit nameတွေနဲ့ ဆက်စပ်နေတတ်ပါတယ်။ ;)
+    
+    
+        User Enumeration:
+    
+          user enumerationမှာ ကိုယ်ရထားတဲ့ userကဘာလဲ ဘယ်လိုserviceတွေrunလို့ရလဲဆိုတာတွေကို ရှာတာဖြစ်ပါတယ်။
+    
+          $ whoami  : username
+    
+          $ id  : uid, gid,....etc
+    
+          $ sudo -l  : ဒါကအရေးပါတဲ့ commandဖြစ်ပါတယ်။ ကိုယ်ရထားတဲ့ userက ဘယ်လို privilegeတွေ ပိုင်ဆိုင်ထားလဲဆိုတာ ကြည့်လို့ရတာဖြစ်ပါတယ်။
+    
+          $ cat /etc/passwd  : targetပေါ်မှာရှိတဲ့ userတွေကို ကြည့်တာဖြစ်ပြီးတော့
+          $ cat /etc/passwd | cut : -f 1 ဆိုရင်usernameတွေချည်း cutပေးမှာဖြစ်ပါတယ်။
+    
+          $ cat /etc/shadow  : password hashတွေသိမ်းထားတဲ့နေရာဖြစ်ပါတယ်။ ဒီfileကိုဖတ်လို့ရရင်တော့ password hashဖြည်ပြီး easily bypassနိုင်မှာဖြစ်ပါတယ်။
+    
+          $ cat /etc/group  : group info
+    
+          $ history  : command log
+    
+    
+        Network Enumeration:
+    
+          Network enumerationဟာလည်း အရေးပါတဲ့processပဲဖြစ်ပါတယ်။ ဒီမှာသုံးရမယ့်commandတွေက versionပေါ်မူတည်ပြီး ရတာ/မရတာရှိပါလိမ့်မယ်။
+    
+          $ ifconfig 
+          $ ip a
+          ဒီနှစ်ခုက targetရဲ့ ipကိုတွေ့ရမှာဖြစ်ပြီးတော့ gateway ipကိုတဆင့် target networkမှာ ချိတ်ဆက်ထားတဲ့ တခြားစက်တွေကို ရှာနိုင်ဖို့ လမ်းစဖြစ်ပါတယ်။
+    
+          $ route
+          $ ip route
+          ဒီနှစ်ခုက မှန်ကန်တဲ့gateway ipကိုပြပေးနိုင်ပါတယ်။
+    
+          $ arp -a
+          $ ip neigh
+          ဒီနှစ်ခုကတော့ targetနဲ့same networkမှာရှိနေတဲ့ ipတွေကိုဖော်ထုတ်ပေးပါတယ်။
+      
+          $ netstat -ano
+          ဒါကတော့ ပွင့်နေတဲ့portတွေနဲ့ ချိတ်ဆက်ထားတဲ့machineတွေ တွေ့ရပါလိမ့်မယ်။
+    
+    
+        Password Hunting:
+    
+          $ grep --color=auto -rnw '/' -ie "<keyword>" --color=always 2>/dev/null
+            ဒီcommandလေးက machineပေါ်က accessလုပ်နိုင်သမျှ fileတွေအကုန်လိုက်ဖတ်မှာဖြစ်ပြီးတော့ <keyword>နေရာမှာထည့်ထားတဲ့ စာလုံးပါတဲ့ စာကြောင်းတွေအားလုံးကို
+          outputထုတ်ပြမှာဖြစ်ပါတယ်။ 
+            !TIP! ဒီတိုင်းrunရင်တော့ မျက်စိရှုပ်မှာဖြစ်ပြီးတော့ output fileထုတ်ခိုင်းပြီး လိုသလိုပြန်ဖတ်ကြည့်ရင်တော့ အတော်လေးအကူအညီဖြစ်မှာပါ အဟိ !TIP!
+            eg.$ grep --color=auto -rnw '/' -ie "PASSWORD=" --color=always 2>/dev/null
+    
+          $ locate password |more
+          $ find / -name password 2>/dev/null
+    
+            id_rsa <== ssh keys
+  
+  
+    AUTOMATIC TOOLS:
+
+
+      Linpeas: https://github.com/carlospolop/privilege-escalation-awesome-scripts-suite/tree/master/linPEAS
+        # From github
+          curl -L https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh | sh
+          
+        # Without curl
+          python -c "import urllib.request; urllib.request.urlretrieve('https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh', 'linpeas.sh')"
+          
+          python3 -c "import urllib.request; urllib.request.urlretrieve('https://github.com/carlospolop/PEASS-ng/releases/latest/download/linpeas.sh', 'linpeas.sh')"
+
+
+      LinEnum: https://github.com/rebootuser/LinEnum
+
+      linux-exploit-suggester: https://github.com/mzet-/linux-exploit-suggester
+
+      LinuxPrivChecker.py: https://github.com/sleventyeleven/linuxprivchecker
+
+==================================================================================================================================================================================
+
+KERNEL EXPLOIT
+
+    Before we start kernel exploit, what is kernel?
+      kernelဆိုတာ softwareနဲ့ hardwareကြား ချိတ်ဆက်ပေးတဲ့ computer programတခုပဲဖြစ်ပါတယ်။
+
+
+  Resource: https://github.com/lucyoa/kernel-exploits
+
+Kernel exploitဆိုတာ  ကျွန်တော်တို့beginnerတွေအတွက်တော့  ကိုယ်ရောက်နေတဲ့စက်ရဲ့  kernel versionကိုအရင်ဖော်ပြီး  kernel versionအတိုင်း  CVEတွေPoCတွေဖတ်ပြီး  exploitလုပ်ရတာဖြစ်ပါတယ်။
+ဒါကိုmanualမလုပ်ချင်ရင်တော့ linux-exploit-suggesterကိုသုံးပြီး  CVEတွေရှာလို့ရပါတယ်။
+
+
+==================================================================================================================================================================================
+
+PASSWORD AND FILE PERMISSIONS
+
+  password huntingမှာ  ကိုယ်တိုင်fileတွေကို  မွှေနှောက်ရှာလို့ရသလို  linpeasလိုautomation toolsတွေကို  သုံးလို့ရပါတယ်။
+  manual huntမယ်ဆိုရင်တော့  enumeration stageမှာသိခဲ့ရတဲ့  running serviceတွေရဲ့  configတွေကို  ဦးတည်ပြီးအရင်ရှာရပါမယ်။
+  .bash_historyလိုhistory fileမျိုးတွေထဲလည်းရှာရပါမယ်။
+
+  file permissionအနေနဲ့က permissionတွေweakဖြစ်နေလားဆိုတာကိုစစ်ရပါမယ်။  ပထမဦးဆုံး /etc/passwdနဲ့ /etc/shadowမှာ  read accessရမရ  စစ်ကြည့်ရပါမယ်။
+
+  ဒီနည်းကတော့  targetရဲ့  credentialတွေdumpတဲ့   နည်းဖြစ်ပါတယ်။
+
+===================================================================================================================================================================================
+
+
+
+
+
+
+
